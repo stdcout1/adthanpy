@@ -65,7 +65,11 @@ def findNext(filterd, timezone):
             closest_prayer = prayers
     diff = (closest_time - current_time).total_seconds(); #ide might give error here 
     hours = diff/3600
-    return f"{closest_prayer} in {round(hours)} hours"
+    mins = diff/60
+    if hours < 1:
+        return f"{closest_prayer} in {round(mins)} mins"
+    else:
+        return f"{closest_prayer} in {round(hours)} hours"
 
 if __name__ == "__main__":
     main()
