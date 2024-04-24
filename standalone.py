@@ -52,10 +52,11 @@ def str_to_time(hour_minute, timezone):
     return timezone.localize(datetime.strptime(f"{current_date} {hour_minute}", "%Y-%m-%d %H:%M"))
 
 def findNext(filterd, timezone):
+    wrapper = "Fajr"
     times = {prayer: str_to_time(time_str, timezone) for prayer, time_str in filterd.items()}
     current_time = datetime.now(timezone)
     closest_time = None
-    closest_prayer = "";
+    closest_prayer = None;
     for prayers, time in times.items():
         # note using times SUCKS
         # some timezones consist of two ofsets! ex America/Toronto has EST and EDT
@@ -63,9 +64,18 @@ def findNext(filterd, timezone):
         if time > current_time and (closest_time is None or time < closest_time):
             closest_time = time
             closest_prayer = prayers
-    diff = (closest_time - current_time).total_seconds(); #ide might give error here 
-    hours = diff/3600
-    mins = diff/60
+    if closest_prayer == None:
+        #return the wrapper prayer 
+        closest_prayer = wrapper
+        closest_time = times[wrapper]
+        # dont worry here the when the next day arrives we will regen everything and will go back to normal
+        hours = closest_time.hour +  24 -current_time.hour;
+        mins = (closest_time.minute + closest_time.hour*60 )+ 24*60 - (current_time.minute + current_time.hour*60 )
+    else:
+        #after this closest_time should not be None 
+        diff = abs(closest_time - current_time).total_seconds(); #ide might give error here 
+        hours = diff/3600
+        mins = diff/60
     if hours < 1:
         return f"{closest_prayer} in {round(mins)} mins"
     else:
