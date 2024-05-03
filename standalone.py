@@ -5,6 +5,7 @@ from time import sleep
 import requests
 from datetime import datetime
 import pytz
+from sys import argv
 
 def main():
 
@@ -13,16 +14,34 @@ def main():
     timezone = pytz.timezone(today["data"]["meta"]["timezone"])
     olddate = datetime.now(timezone).date()
     current_date = datetime.now(timezone).date()
-    #request prayer times
-    while True:
-        if olddate != current_date:
-            today = requests.get("http://api.aladhan.com/v1/timingsByCity?city=Toronto&country=CA").json();
-            olddate = datetime.now(timezone).date()
+    modes = ["waybar", "print"]
+    if (len(argv) != 2 ):
+        printusage(argv[0], modes)
+        return 1 
+    if not (argv[1] in modes):
+        printusage(argv[0],modes)
+        return 1
+    if (argv[1] == "waybar"):
+        #request prayer times
+        while True:
+            if olddate != current_date:
+                today = requests.get("http://api.aladhan.com/v1/timingsByCity?city=Toronto&country=CA").json();
+                olddate = datetime.now(timezone).date()
+            current_date = datetime.now(timezone).date()
+            filterd = filter(today["data"]["timings"], whitelist_prayers);
+            respond(findNext(filterd, timezone), formatTooltip(filterd))
+            sleep(60)
+    if (argv[1] == "print"):
         current_date = datetime.now(timezone).date()
         filterd = filter(today["data"]["timings"], whitelist_prayers);
-        respond(findNext(filterd, timezone), formatTooltip(filterd))
-        sleep(60)
+        print(findNext(filterd, timezone), flush=True)
+        return 0
+        
+    return 1
 
+def printusage(name, modes):
+    print(f"Usage: {name} mode")
+    print(f"    mode: {modes}")
 
 def respond(text, tooltip):
     dict = {}
